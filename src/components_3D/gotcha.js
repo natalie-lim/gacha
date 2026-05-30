@@ -128,7 +128,8 @@ function Gotcha() {
 
     const gumballColors = [
       0xff6b6b, 0xffa94d, 0xffd43b, 0x69db7c, 0x74c0fc, 0xda77f2, 0xf783ac,
-      0x63e6be, 0xa9e34b, 0x4dabf7, 0xb197fc, 0xff8787,
+      0x63e6be, 0xa9e34b, 0x4dabf7, 0xb197fc, 0xff8787, 0xff6eb4, 0x40e0d0,
+      0xffd700, 0x98fb98, 0xdda0dd, 0xff7f50,
     ];
 
     // Physics world — gravity along -Y
@@ -165,7 +166,7 @@ function Gotcha() {
     gumballColors.forEach((color, i) => {
       const body = new CANNON.Body({
         mass: 1,
-        shape: new CANNON.Sphere(0.24),
+        shape: new CANNON.Sphere(0.2),
         material: sphereMat,
         linearDamping: 0.3,
         angularDamping: 0.3,
