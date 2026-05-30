@@ -134,8 +134,11 @@ function Gotcha() {
     // Physics world — gravity along -Y
     const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
 
+    const sphereMat = new CANNON.Material('sphere');
+    const wallMat = new CANNON.Material('wall');
+
     // Static container matching glass window world bounds: X:-1→1, Y:-0.625→0.625, Z:0→1
-    const container = new CANNON.Body({ mass: 0 });
+    const container = new CANNON.Body({ mass: 0, material: wallMat });
     container.addShape(new CANNON.Box(new CANNON.Vec3(1,    0.05,  0.5)),  new CANNON.Vec3(0, -0.625, 0.5)); // floor
     container.addShape(new CANNON.Box(new CANNON.Vec3(0.05, 0.65,  0.5)),  new CANNON.Vec3(-1, 0,    0.5)); // left
     container.addShape(new CANNON.Box(new CANNON.Vec3(0.05, 0.65,  0.5)),  new CANNON.Vec3( 1, 0,    0.5)); // right
@@ -147,28 +150,41 @@ function Gotcha() {
     const sphereBodies = [];
     const sphereMeshes = [];
 
+    const sphereSphereContact = new CANNON.ContactMaterial(sphereMat, sphereMat, {
+    friction: 0.4,
+    restitution: 0.4,
+    });
+    const sphereWallContact = new CANNON.ContactMaterial(sphereMat, wallMat, {
+    friction: 0.6,
+    restitution: 0.2,
+    });
+
+    world.addContactMaterial(sphereSphereContact);
+    world.addContactMaterial(sphereWallContact);
+
     gumballColors.forEach((color, i) => {
       const body = new CANNON.Body({
         mass: 1,
         shape: new CANNON.Sphere(0.24),
+        material: sphereMat,
         linearDamping: 0.3,
         angularDamping: 0.3,
       });
       const col = i % 3;
       const row = Math.floor((i % 6) / 3);
       const layer = Math.floor(i / 6);
-      body.position.set([-0.5, 0, 0.5][col], [-0.3, 0.2][row], [0.25, 0.75][layer]);
+      body.position.set([-0.5 + Math.random()*0.03, 0+ Math.random()*0.03, 0.5+ Math.random()*0.03][col], 
+        [-0.3+ Math.random()*0.03, 0.2+ Math.random()*0.03][row], 
+        [0.25+ Math.random()*0.03, 0.75+ Math.random()*0.03][layer]);
       world.addBody(body);
       sphereBodies.push(body);
 
       const mat = new THREE.MeshPhysicalMaterial({
         color,
-        transmission: 0.5,
         roughness: 0.1,
         metalness: 0,
-        ior: 1.4,
-        thickness: 0.3,
-        transparent: true,
+        clearcoat: 1,
+        clearcoatRoughness: 0.05,
       });
       const sphere = new THREE.Mesh(sphereGeo, mat);
       scene.add(sphere);
