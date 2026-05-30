@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Evaluator, Brush, SUBTRACTION, ADDITION } from "three-bvh-csg";
+import * as CANNON from "cannon-es";
 
 function Gotcha() {
   const mountRef = useRef(null);
@@ -112,6 +113,7 @@ function Gotcha() {
     const top = evaluator.evaluate(base, roof, ADDITION);
     const body = evaluator.evaluate(base_of_base, top, ADDITION);
     const result = evaluator.evaluate(body, cutter, SUBTRACTION);
+    result.position.y = -2;
     scene.add(result);
 
     const glassMesh = new THREE.Mesh(bubbleGeometry, bubbleMaterial);
@@ -119,7 +121,7 @@ function Gotcha() {
     glassMesh.rotation.y = Math.PI / 2;
     glassMesh.rotation.z = Math.PI / 2;
     glassMesh.position.x = bubble_position_x;
-    glassMesh.position.y = bubble_position_y;
+    glassMesh.position.y = bubble_position_y-2;
     glassMesh.position.z = bubble_position_z;
 
     scene.add(glassMesh);
@@ -129,16 +131,38 @@ function Gotcha() {
       0x63e6be, 0xa9e34b, 0x4dabf7, 0xb197fc, 0xff8787,
     ];
 
-    const sphereGeo = new THREE.SphereGeometry(0.24, 40, 40);
-    const positions = [
-      [-0.75, 1.63, 0.25], [-0.25, 1.63, 0.75], [0.25, 1.63, 0.25], [0.75, 1.63, 0.75],
-      [-0.75, 2.0,  0.75], [-0.25, 2.0,  0.25], [0.25, 2.0,  0.75], [0.75, 2.0,  0.25],
-      [-0.75, 2.37, 0.25], [-0.25, 2.37, 0.75], [0.25, 2.37, 0.25], [0.75, 2.37, 0.75],
-    ];
+    // Physics world — gravity along -Y
+    const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
 
-    positions.forEach(([x, y, z], i) => {
+    // Static container matching glass window world bounds: X:-1→1, Y:-0.625→0.625, Z:0→1
+    const container = new CANNON.Body({ mass: 0 });
+    container.addShape(new CANNON.Box(new CANNON.Vec3(1,    0.05,  0.5)),  new CANNON.Vec3(0, -0.625, 0.5)); // floor
+    container.addShape(new CANNON.Box(new CANNON.Vec3(0.05, 0.65,  0.5)),  new CANNON.Vec3(-1, 0,    0.5)); // left
+    container.addShape(new CANNON.Box(new CANNON.Vec3(0.05, 0.65,  0.5)),  new CANNON.Vec3( 1, 0,    0.5)); // right
+    container.addShape(new CANNON.Box(new CANNON.Vec3(1,    0.65,  0.05)), new CANNON.Vec3(0,  0,    0));   // back
+    container.addShape(new CANNON.Box(new CANNON.Vec3(1,    0.65,  0.05)), new CANNON.Vec3(0,  0,    1));   // front
+    world.addBody(container);
+
+    const sphereGeo = new THREE.SphereGeometry(0.24, 40, 40);
+    const sphereBodies = [];
+    const sphereMeshes = [];
+
+    gumballColors.forEach((color, i) => {
+      const body = new CANNON.Body({
+        mass: 1,
+        shape: new CANNON.Sphere(0.24),
+        linearDamping: 0.3,
+        angularDamping: 0.3,
+      });
+      const col = i % 3;
+      const row = Math.floor((i % 6) / 3);
+      const layer = Math.floor(i / 6);
+      body.position.set([-0.5, 0, 0.5][col], [-0.3, 0.2][row], [0.25, 0.75][layer]);
+      world.addBody(body);
+      sphereBodies.push(body);
+
       const mat = new THREE.MeshPhysicalMaterial({
-        color: gumballColors[i],
+        color,
         transmission: 0.5,
         roughness: 0.1,
         metalness: 0,
@@ -147,11 +171,16 @@ function Gotcha() {
         transparent: true,
       });
       const sphere = new THREE.Mesh(sphereGeo, mat);
-      sphere.position.set(x, y, z);
       scene.add(sphere);
+      sphereMeshes.push(sphere);
     });
 
-    function animate(time) {
+    function animate() {
+      world.fixedStep();
+      sphereBodies.forEach((body, i) => {
+        sphereMeshes[i].position.copy(body.position);
+        sphereMeshes[i].quaternion.copy(body.quaternion);
+      });
       controls.update();
       renderer.render(scene, camera);
     }
