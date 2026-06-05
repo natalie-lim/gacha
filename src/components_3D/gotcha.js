@@ -49,7 +49,7 @@ function Gotcha() {
       base_z = 1.75;
 
     const geometry = new THREE.BoxGeometry(base_x, base_y, base_z);
-    const material = new THREE.MeshPhongMaterial({ color: 0xb4ceb3 });
+    const material = new THREE.MeshPhongMaterial({ color: 0x89a894 });
     const base = new Brush(geometry, material);
 
     const geometry_base = new THREE.BoxGeometry(
@@ -147,14 +147,23 @@ function Gotcha() {
     crank_handle.updateMatrixWorld();
     hole.updateMatrixWorld();
 
+    const coinSlotGeo = new THREE.BoxGeometry(0.075, 0.3, 1);
+    const coinCut = new Brush(coinSlotGeo);
+    coinCut.position.x = 0.5;
+    coinCut.position.y = 1;
+    coinCut.position.z = 0.5;
+    coinCut.updateMatrixWorld();
+
     const top = evaluator.evaluate(base, roof, ADDITION);
     const body = evaluator.evaluate(base_of_base, top, ADDITION);
-    const result = evaluator.evaluate(body, cutter, SUBTRACTION);
+    const withCoin = evaluator.evaluate(body, coinCut, SUBTRACTION);
+    const result = evaluator.evaluate(withCoin, cutter, SUBTRACTION);
     result.position.y = -2;
 
     const crank = evaluator.evaluate(crank_base, crank_handle, ADDITION);
     const crankMesh = evaluator.evaluate(crank, hole, SUBTRACTION);
     crankMesh.position.y = -1;
+    crankMesh.position.x = -0.3;
     scene.add(crankMesh);
     scene.add(result);
 
@@ -165,7 +174,6 @@ function Gotcha() {
     glassMesh.position.x = bubble_position_x;
     glassMesh.position.y = bubble_position_y - 2;
     glassMesh.position.z = bubble_position_z;
-
     scene.add(glassMesh);
 
     const gumballColors = [
@@ -258,6 +266,7 @@ function Gotcha() {
       scene.add(sphere);
       sphereMeshes.push(sphere);
     });
+    let crankRotation = 0;
 
     function animate() {
       world.fixedStep();
@@ -265,19 +274,27 @@ function Gotcha() {
         sphereMeshes[i].position.copy(body.position);
         sphereMeshes[i].quaternion.copy(body.quaternion);
       });
+
+      if (crankRotation > 0) {
+        const step = Math.min(0.15, crankRotation);
+        crankMesh.rotateOnAxis(new THREE.Vector3(0, 1, 0), step);
+        crankRotation -= step;
+      }
+
       controls.update();
       renderer.render(scene, camera);
     }
     renderer.setAnimationLoop(animate);
 
+    function spinCrank() {
+      crankRotation += Math.PI * 2;
+    }
+
     function onClick() {
       raycaster.setFromCamera(mouse, camera);
       const hits = raycaster.intersectObjects([crankMesh], true);
       if (hits.length > 0) {
-        const mat = Array.isArray(crankMesh.material)
-          ? crankMesh.material[0]
-          : crankMesh.material;
-        if (mat?.color) mat.color.set(0xff0000);
+        spinCrank();
       }
     }
     renderer.domElement.addEventListener("click", onClick);
