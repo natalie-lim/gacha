@@ -26,10 +26,10 @@ function Gotcha() {
     const controls = new OrbitControls(camera, renderer.domElement);
     const mouse = new THREE.Vector2();
     const raycaster = new THREE.Raycaster();
-    // track normal mouse movement (-1 to +1 range)
     window.addEventListener("pointermove", (event) => {
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     });
     // controls.update() must be called after any manual changes to the camera's transform
     camera.position.set(0, 0, 5);
@@ -404,7 +404,7 @@ function Gotcha() {
     };
   }, []);
 
-  return <div ref={mountRef} style={{ width: "100%", height: "100vh" }} />;
+  return <div ref={mountRef} style={{ width: "100vw", height: "100vh" }} />;
 }
 
 export default Gotcha;

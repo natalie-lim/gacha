@@ -13,8 +13,8 @@ function Welcome({ text = "" }) {
   }, [displayed]);
 
   return (
-    <div className="flex bg-green-50 w-screen h-screen">
-      <p className="flex items-center mx-auto justify-center text-xl">
+    <div>
+      <p className="w-screen h-screen flex items-center justify-center text-xl">
         {displayed}
         {showCursor && (
           <span
