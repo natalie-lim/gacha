@@ -45,11 +45,14 @@ function Gotcha() {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
     const base_x = 2,
-      base_y = 2.75,
+      base_y = 3,
       base_z = 1.75;
 
     const geometry = new THREE.BoxGeometry(base_x, base_y, base_z);
-    const material = new THREE.MeshPhongMaterial({ color: 0x89a894 });
+    const material = new THREE.MeshPhongMaterial({
+      color: 0x89a894,
+      side: THREE.DoubleSide,
+    });
     const base = new Brush(geometry, material);
 
     const geometry_base = new THREE.BoxGeometry(
@@ -72,7 +75,7 @@ function Gotcha() {
     roof.position.y = base.position.y + base_y / 2 + 0.25 / 2;
 
     const shape = new THREE.Shape();
-    const w = 1,
+    const w = 1.5,
       h = 1.25,
       r = 0.2; // width, height, corner radius
 
@@ -100,14 +103,14 @@ function Gotcha() {
 
     const bubble_position_x = -1,
       bubble_position_y = 2,
-      bubble_position_z = 0.5;
+      bubble_position_z = 0.3;
 
     const cutter = new Brush(bubbleGeometry);
     cutter.rotation.x = Math.PI / 2;
     cutter.rotation.y = Math.PI / 2;
     cutter.rotation.z = Math.PI / 2;
     cutter.position.x = bubble_position_x;
-    cutter.position.y = bubble_position_y;
+    cutter.position.y = bubble_position_y + 0.25;
     cutter.position.z = bubble_position_z;
 
     const geometry_crank = new THREE.CylinderGeometry(
@@ -121,7 +124,10 @@ function Gotcha() {
       Math.PI * 2,
     );
 
-    const crank_material = new THREE.MeshPhongMaterial({ color: 0x463239 });
+    const crank_material = new THREE.MeshPhongMaterial({
+      color: 0x463239,
+      side: THREE.DoubleSide,
+    });
     const crank_base = new Brush(geometry_crank, crank_material);
     crank_base.rotation.x = Math.PI / 2;
     crank_base.position.z = base_z / 2 + 0.025;
@@ -134,7 +140,7 @@ function Gotcha() {
     crank_handle.position.z = crank_base.position.z + 0.1;
 
     const hole_geo = new THREE.CylinderGeometry(0.1, 0.1, 0.1, 25);
-    const hole = new Brush(hole_geo);
+    const hole = new Brush(hole_geo, crank_material);
     hole.rotation.x = Math.PI / 2;
     hole.position.z = crank_base.position.z;
     hole.position.y = crank_base.position.y;
@@ -147,23 +153,49 @@ function Gotcha() {
     crank_handle.updateMatrixWorld();
     hole.updateMatrixWorld();
 
-    const coinSlotGeo = new THREE.BoxGeometry(0.075, 0.3, 1);
-    const coinCut = new Brush(coinSlotGeo);
-    coinCut.position.x = 0.5;
-    coinCut.position.y = 1;
-    coinCut.position.z = 0.5;
+    const coinOutlineGeo = new THREE.BoxGeometry(0.2, 0.45, 0.85);
+    const outlineMateral = new THREE.MeshPhongMaterial({
+      color: 0xcccccc,
+      specular: 0xffffff,
+      shininess: 200,
+    });
+    const coinOutline = new Brush(coinOutlineGeo, outlineMateral);
+    const coinSlotGeo = new THREE.BoxGeometry(0.075, 0.3, 2);
+    const coinCut = new Brush(coinSlotGeo, material);
+
+    const coin_x = 0.5;
+    const coin_y = 1.2;
+    const coin_z = 0.5;
+
+    coinOutline.position.x = coin_x;
+    coinOutline.position.y = coin_y;
+    coinOutline.position.z = coin_z;
+    coinCut.position.x = coin_x;
+    coinCut.position.y = coin_y;
+    coinCut.position.z = coin_z;
     coinCut.updateMatrixWorld();
+    coinOutline.updateMatrixWorld();
+
+    const outputGeo = new THREE.CylinderGeometry(0.3, 0.3, 1.5, 20);
+    const outputHole = new Brush(outputGeo, material);
+    outputHole.position.y = 0.6;
+    outputHole.position.z = 0.6;
+    outputHole.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI * -0.4);
+
+    outputHole.updateMatrixWorld();
 
     const top = evaluator.evaluate(base, roof, ADDITION);
     const body = evaluator.evaluate(base_of_base, top, ADDITION);
-    const withCoin = evaluator.evaluate(body, coinCut, SUBTRACTION);
-    const result = evaluator.evaluate(withCoin, cutter, SUBTRACTION);
+    const withCoin = evaluator.evaluate(body, coinOutline, ADDITION);
+    const withCut = evaluator.evaluate(withCoin, coinCut, SUBTRACTION);
+    const withOutput = evaluator.evaluate(withCut, outputHole, SUBTRACTION);
+    const result = evaluator.evaluate(withOutput, cutter, SUBTRACTION);
     result.position.y = -2;
 
     const crank = evaluator.evaluate(crank_base, crank_handle, ADDITION);
     const crankMesh = evaluator.evaluate(crank, hole, SUBTRACTION);
-    crankMesh.position.y = -1;
-    crankMesh.position.x = -0.3;
+    crankMesh.position.y = -0.8;
+    crankMesh.position.x = -0.4;
     scene.add(crankMesh);
     scene.add(result);
 
@@ -172,7 +204,7 @@ function Gotcha() {
     glassMesh.rotation.y = Math.PI / 2;
     glassMesh.rotation.z = Math.PI / 2;
     glassMesh.position.x = bubble_position_x;
-    glassMesh.position.y = bubble_position_y - 2;
+    glassMesh.position.y = bubble_position_y - 1.75;
     glassMesh.position.z = bubble_position_z;
     scene.add(glassMesh);
 
@@ -188,27 +220,31 @@ function Gotcha() {
     const sphereMat = new CANNON.Material("sphere");
     const wallMat = new CANNON.Material("wall");
 
-    // Static container matching glass window world bounds: X:-1→1, Y:-0.625→0.625, Z:0→1
+    // Static container: X inner faces ±0.95, Y floor -0.325/ceiling 0.9, Z inner faces -0.25→1.05
     const container = new CANNON.Body({ mass: 0, material: wallMat });
     container.addShape(
-      new CANNON.Box(new CANNON.Vec3(1, 0.05, 0.5)),
-      new CANNON.Vec3(0, -0.625, 0.5),
+      new CANNON.Box(new CANNON.Vec3(1, 0.05, 0.7)),
+      new CANNON.Vec3(0, -0.375, 0.4),
     ); // floor
     container.addShape(
-      new CANNON.Box(new CANNON.Vec3(0.05, 0.65, 0.5)),
-      new CANNON.Vec3(-1, 0, 0.5),
+      new CANNON.Box(new CANNON.Vec3(1, 0.05, 0.7)),
+      new CANNON.Vec3(0, 0.95, 0.4),
+    ); // ceiling
+    container.addShape(
+      new CANNON.Box(new CANNON.Vec3(0.05, 0.65, 0.7)),
+      new CANNON.Vec3(-1, 0.25, 0.4),
     ); // left
     container.addShape(
-      new CANNON.Box(new CANNON.Vec3(0.05, 0.65, 0.5)),
-      new CANNON.Vec3(1, 0, 0.5),
+      new CANNON.Box(new CANNON.Vec3(0.05, 0.65, 0.7)),
+      new CANNON.Vec3(1, 0.25, 0.4),
     ); // right
     container.addShape(
       new CANNON.Box(new CANNON.Vec3(1, 0.65, 0.05)),
-      new CANNON.Vec3(0, 0, 0),
+      new CANNON.Vec3(0, 0.25, -0.3),
     ); // back
     container.addShape(
       new CANNON.Box(new CANNON.Vec3(1, 0.65, 0.05)),
-      new CANNON.Vec3(0, 0, 1),
+      new CANNON.Vec3(0, 0.25, 1.1),
     ); // front
     world.addBody(container);
 
@@ -249,8 +285,12 @@ function Gotcha() {
           0 + Math.random() * 0.03,
           0.5 + Math.random() * 0.03,
         ][col],
-        [-0.3 + Math.random() * 0.03, 0.2 + Math.random() * 0.03][row],
-        [0.25 + Math.random() * 0.03, 0.75 + Math.random() * 0.03][layer],
+        [-0.05 + Math.random() * 0.03, 0.45 + Math.random() * 0.03][row],
+        [
+          0.05 + Math.random() * 0.03,
+          0.45 + Math.random() * 0.03,
+          0.8 + Math.random() * 0.03,
+        ][layer],
       );
       world.addBody(body);
       sphereBodies.push(body);
@@ -276,7 +316,7 @@ function Gotcha() {
       });
 
       if (crankRotation > 0) {
-        const step = Math.min(0.15, crankRotation);
+        const step = Math.min(0.25, crankRotation);
         crankMesh.rotateOnAxis(new THREE.Vector3(0, 1, 0), step);
         crankRotation -= step;
       }
@@ -290,11 +330,33 @@ function Gotcha() {
       crankRotation += Math.PI * 2;
     }
 
+    function spawnBall(x, y, z, color) {
+      const body = new CANNON.Body({
+        mass: 1,
+        shape: new CANNON.Sphere(0.2),
+        material: sphereMat,
+      });
+      body.position.set(x, y, z);
+      world.addBody(body);
+      const mesh = new THREE.Mesh(sphereGeo, new THREE.MeshPhysicalMaterial({ color }));
+      scene.add(mesh);
+      sphereBodies.push(body);
+      sphereMeshes.push(mesh);
+    }
+
     function onClick() {
       raycaster.setFromCamera(mouse, camera);
       const hits = raycaster.intersectObjects([crankMesh], true);
       if (hits.length > 0) {
         spinCrank();
+        setTimeout(() => {
+          spawnBall(
+            1,
+            1,
+            1,
+            gumballColors[Math.floor(Math.random() * gumballColors.length)],
+          );
+        }, 500);
       }
     }
     renderer.domElement.addEventListener("click", onClick);
