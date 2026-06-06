@@ -32,7 +32,8 @@ function Gotcha() {
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
     });
     // controls.update() must be called after any manual changes to the camera's transform
-    camera.position.set(0, 20, 100);
+    camera.position.set(0, 0, 5);
+    controls.target.set(0, -0.375, 0);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
 
@@ -44,8 +45,8 @@ function Gotcha() {
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
-    const base_x = 2,
-      base_y = 3,
+    const base_x = 1.85,
+      base_y = 2.5,
       base_z = 1.75;
 
     const geometry = new THREE.BoxGeometry(base_x, base_y, base_z);
@@ -110,7 +111,7 @@ function Gotcha() {
     cutter.rotation.y = Math.PI / 2;
     cutter.rotation.z = Math.PI / 2;
     cutter.position.x = bubble_position_x;
-    cutter.position.y = bubble_position_y + 0.25;
+    cutter.position.y = bubble_position_y;
     cutter.position.z = bubble_position_z;
 
     const geometry_crank = new THREE.CylinderGeometry(
@@ -131,7 +132,7 @@ function Gotcha() {
     const crank_base = new Brush(geometry_crank, crank_material);
     crank_base.rotation.x = Math.PI / 2;
     crank_base.position.z = base_z / 2 + 0.025;
-    crank_base.position.y = -1;
+    crank_base.position.y = -2;
 
     const geometry_crank_handle = new THREE.BoxGeometry(0.5, 0.075, 0.1);
     const crank_handle = new Brush(geometry_crank_handle, crank_material);
@@ -204,7 +205,7 @@ function Gotcha() {
     glassMesh.rotation.y = Math.PI / 2;
     glassMesh.rotation.z = Math.PI / 2;
     glassMesh.position.x = bubble_position_x;
-    glassMesh.position.y = bubble_position_y - 1.75;
+    glassMesh.position.y = bubble_position_y - 2.0;
     glassMesh.position.z = bubble_position_z;
     scene.add(glassMesh);
 
@@ -220,31 +221,31 @@ function Gotcha() {
     const sphereMat = new CANNON.Material("sphere");
     const wallMat = new CANNON.Material("wall");
 
-    // Static container: X inner faces ±0.95, Y floor -0.325/ceiling 0.9, Z inner faces -0.45→0.85
+    // Static container: X inner faces ±0.95, Y floor -0.625/ceiling 0.6, Z inner faces -0.45→0.85
     const container = new CANNON.Body({ mass: 0, material: wallMat });
     container.addShape(
       new CANNON.Box(new CANNON.Vec3(1, 0.05, 0.7)),
-      new CANNON.Vec3(0, -0.375, 0.2),
+      new CANNON.Vec3(0, -0.625, 0.2),
     ); // floor
     container.addShape(
       new CANNON.Box(new CANNON.Vec3(1, 0.05, 0.7)),
-      new CANNON.Vec3(0, 0.95, 0.2),
+      new CANNON.Vec3(0, 0.7, 0.2),
     ); // ceiling
     container.addShape(
       new CANNON.Box(new CANNON.Vec3(0.05, 0.65, 0.7)),
-      new CANNON.Vec3(-1, 0.25, 0.2),
+      new CANNON.Vec3(-1, 0.0, 0.2),
     ); // left
     container.addShape(
       new CANNON.Box(new CANNON.Vec3(0.05, 0.65, 0.7)),
-      new CANNON.Vec3(1, 0.25, 0.2),
+      new CANNON.Vec3(1, 0.0, 0.2),
     ); // right
     container.addShape(
       new CANNON.Box(new CANNON.Vec3(1, 0.65, 0.05)),
-      new CANNON.Vec3(0, 0.25, -0.5),
+      new CANNON.Vec3(0, 0.0, -0.5),
     ); // back
     container.addShape(
       new CANNON.Box(new CANNON.Vec3(1, 0.65, 0.05)),
-      new CANNON.Vec3(0, 0.25, 0.9),
+      new CANNON.Vec3(0, 0.0, 0.9),
     ); // front
     world.addBody(container);
 
@@ -285,11 +286,11 @@ function Gotcha() {
           0 + Math.random() * 0.03,
           0.5 + Math.random() * 0.03,
         ][col],
-        [-0.05 + Math.random() * 0.03, 0.45 + Math.random() * 0.03][row],
+        [-0.35 + Math.random() * 0.03, 0.15 + Math.random() * 0.03][row],
         [
-          -0.15 + Math.random() * 0.03,
-          0.25 + Math.random() * 0.03,
-          0.6 + Math.random() * 0.03,
+          0.05 + Math.random() * 0.03,
+          0.45 + Math.random() * 0.03,
+          0.8 + Math.random() * 0.03,
         ][layer],
       );
       world.addBody(body);
@@ -354,7 +355,7 @@ function Gotcha() {
         spinCrank();
         setTimeout(() => {
           spawnBall(
-            1,
+            0,
             1,
             1,
             gumballColors[Math.floor(Math.random() * gumballColors.length)],

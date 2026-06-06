@@ -11,9 +11,11 @@ function App() {
   }, []);
 
   return (
-    <div className="bg-green-50">
+    <div className="bg-green-50 flex items-center justify-center" style={{ height: "100vh" }}>
       {/* {visible && <Welcome text="hi, my name is natalie!" />} */}
-      <Gotcha />
+      <div style={{ width: "85vw", height: "85vh" }}>
+        <Gotcha />
+      </div>
     </div>
   );
 }
