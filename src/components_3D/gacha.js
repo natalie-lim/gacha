@@ -403,7 +403,7 @@ function Gotcha() {
     };
   }, []);
 
-  return <div ref={mountRef} className="border-2" style={{ width: "600px", height: "600px" }} />;
+  return <div ref={mountRef} className="" style={{ width: "600px", height: "600px" }} />;
 }
 
 export default Gotcha;
