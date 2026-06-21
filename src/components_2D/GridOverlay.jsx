@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
-const GRID = 60;
-const GLOW_RADIUS = 180;
+const GRID = 40;
+const GLOW_RADIUS = 120;
 const COLOR = "14, 71, 73"; // #0e4749
 
 function GridOverlay() {

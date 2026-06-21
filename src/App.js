@@ -29,16 +29,11 @@ function App() {
               </p>
             </div>
 
-            <div className="">
+            <div className="flex flex-col items-center justify-center">
               <Gotcha />
             </div>
           </div>
           <Nav />
-          <div className="min-h-screen flex items-center justify-center">
-            <p className="text-[#0e4749] text-2xl font-semibold">
-              more coming soon
-            </p>
-          </div>
         </div>
       )}
     </div>
