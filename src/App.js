@@ -4,10 +4,11 @@ import Nav from "./components_2D/Navigation";
 import GridOverlay from "./components_2D/GridOverlay";
 import About from "./components_2D/About";
 import Gacha from "./components_3D/gacha";
+import Work from "./components_2D/Work";
 
 function App() {
   const [isWelcome, setIsWelcome] = useState(true);
-  const [view, setView] = useState("home"); // "home" | "gacha"
+  const [view, setView] = useState("home");
 
   useEffect(() => {
     const timer = setTimeout(() => setIsWelcome(false), 3500);
@@ -33,6 +34,7 @@ function App() {
                 </div>
               )}
             {view == "about" && <About />}
+            {view == "work" && <Work />}
             {(view === "home" || view === "gacha") && (
                   <div className="flex flex-col items-center justify-center">
                     <Gacha
@@ -49,6 +51,7 @@ function App() {
             onHome={() => setView("home")}
             onGacha={() => setView("gacha")}
             onAbout={() => setView("about")}
+            onWork={() => setView("work")}
           />
         </div>
       )}
