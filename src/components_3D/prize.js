@@ -111,7 +111,7 @@ function Prize3D({ onBurst, color = 0xff6eb4 }) {
     }
     mount.addEventListener("click", onClick);
 
-    const autoBurst = setTimeout(() => doBurst(performance.now()), 2500);
+    const autoBurst = setTimeout(() => doBurst(performance.now()), 1200);
 
     return () => {
       clearTimeout(autoBurst);
