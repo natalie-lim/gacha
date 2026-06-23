@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import aboutImg from "../assets/about.JPG";
 import Prize3D from "../components_3D/prize";
 import carpenterLogo from "../assets/carpenter.png";
 import upaheadLogo from "../assets/upahead.png";
